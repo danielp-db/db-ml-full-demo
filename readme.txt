@@ -13,3 +13,5 @@ The topics are:
 - Quickly show `AI` functions.
 - Build a quick Agent that uses RAG with Vector Search / Structured Data and functions.
 - Discussion about GenAI Evaluation tools.
+
+TOOD: Complete This
