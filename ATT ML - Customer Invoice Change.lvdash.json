@@ -1,0 +1,224 @@
+{
+  "datasets" : [ {
+    "name" : "7bfa647d",
+    "displayName" : "Predictions",
+    "query" : "  WITH a1 AS (\n    SELECT \n      customer_id\n      , billing_month\n      , total_invoice\n      , LAG(total_invoice) OVER (PARTITION BY customer_id ORDER BY billing_month) lm_invoice\n    FROM daniel_perez.att_ml.invoices\n  ), a2 AS (\n    SELECT\n      *\n      , (total_invoice - lm_invoice) / lm_invoice AS pct_diff\n    FROM a1\n  ), ground_truth AS (\n  SELECT\n    customer_id\n    , billing_month\n    , CASE\n        WHEN pct_diff >= 0.1 THEN 'Increase' \n        WHEN pct_diff <= -0.1 THEN 'Decrease'\n        ELSE 'Same'\n        END invoice_change\n  FROM a2\n  )\n\nSELECT \n  c.customer_id\n  , c.plan_id\n  , location\n  , t.billing_month\n  , t.invoice_change as actual_invoice_change\n  , p.invoice_change as predicted_invoice_change\nFROM ground_truth t\nINNER JOIN daniel_perez.att_ml.customer_demographics d\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customers c\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customer_invoice_change_predictions p\nUSING (customer_id, billing_month)"
+  }, {
+    "name" : "9b982a56",
+    "displayName" : "Results",
+    "query" : "  WITH a1 AS (\n    SELECT \n      customer_id\n      , billing_month\n      , total_invoice\n      , LAG(total_invoice) OVER (PARTITION BY customer_id ORDER BY billing_month) lm_invoice\n    FROM daniel_perez.att_ml.invoices\n  ), a2 AS (\n    SELECT\n      *\n      , (total_invoice - lm_invoice) / lm_invoice AS pct_diff\n    FROM a1\n  ), ground_truth AS (\n  SELECT\n    customer_id\n    , billing_month\n    , CASE\n        WHEN pct_diff >= 0.1 THEN 'Increase' \n        WHEN pct_diff <= -0.1 THEN 'Decrease'\n        ELSE 'Same'\n        END invoice_change\n  FROM a2\n  )\n\nSELECT \n  c.customer_id\n  , c.plan_id\n  , location\n  , t.billing_month\n  , t.invoice_change as actual_invoice_change\n  , p.invoice_change as predicted_invoice_change\nFROM ground_truth t\nINNER JOIN daniel_perez.att_ml.customer_demographics d\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customers c\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customer_invoice_change_predictions p\nUSING (customer_id, billing_month)"
+  }, {
+    "name" : "2dffb0d7",
+    "displayName" : "Latest Prediction Date",
+    "query" : "SELECT max(billing_month) max_billing_month FROM daniel_perez.att_ml.customer_invoice_change_predictions;"
+  }, {
+    "name" : "20b145ea",
+    "displayName" : "Latest Predictions",
+    "query" : "  WITH a1 AS (\n    SELECT \n      customer_id\n      , billing_month\n      , total_invoice\n      , LAG(total_invoice) OVER (PARTITION BY customer_id ORDER BY billing_month) lm_invoice\n    FROM daniel_perez.att_ml.invoices\n  ), a2 AS (\n    SELECT\n      *\n      , (total_invoice - lm_invoice) / lm_invoice AS pct_diff\n    FROM a1\n  ), ground_truth AS (\n  SELECT\n    customer_id\n    , billing_month\n    , CASE\n        WHEN pct_diff >= 0.1 THEN 'Increase' \n        WHEN pct_diff <= -0.1 THEN 'Decrease'\n        ELSE 'Same'\n        END invoice_change\n  FROM a2\n  )\n\nSELECT \n  c.customer_id\n  , c.plan_id\n  , location\n  , t.billing_month\n  , t.invoice_change as actual_invoice_change\n  , p.invoice_change as predicted_invoice_change\nFROM ground_truth t\nINNER JOIN daniel_perez.att_ml.customer_demographics d\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customers c\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customer_invoice_change_predictions p\nUSING (customer_id, billing_month)\nWHERE t.billing_month >= (SELECT max(billing_month) max_billing_month FROM daniel_perez.att_ml.customer_invoice_change_predictions)"
+  }, {
+    "name" : "7d6c3665",
+    "displayName" : "Aggregated Predictions",
+    "query" : "  WITH a1 AS (\n    SELECT \n      customer_id\n      , billing_month\n      , total_invoice\n      , LAG(total_invoice) OVER (PARTITION BY customer_id ORDER BY billing_month) lm_invoice\n    FROM daniel_perez.att_ml.invoices\n  ), a2 AS (\n    SELECT\n      *\n      , (total_invoice - lm_invoice) / lm_invoice AS pct_diff\n    FROM a1\n  ), ground_truth AS (\n  SELECT\n    customer_id\n    , billing_month\n    , CASE\n        WHEN pct_diff >= 0.1 THEN 'Increase' \n        WHEN pct_diff <= -0.1 THEN 'Decrease'\n        ELSE 'Same'\n        END invoice_change\n  FROM a2\n  ), preds AS (\nSELECT \n  c.customer_id\n  , c.plan_id\n  , location\n  , t.billing_month\n  , t.invoice_change as actual_invoice_change\n  , p.invoice_change as predicted_invoice_change\nFROM ground_truth t\nINNER JOIN daniel_perez.att_ml.customer_demographics d\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customers c\nUSING (customer_id)\nINNER JOIN daniel_perez.att_ml.customer_invoice_change_predictions p\nUSING (customer_id, billing_month)\n  )\n\n\nSELECT\n  *\n  , (CASE WHEN actual_invoice_change = predicted_invoice_change THEN 1 ELSE 0 END) is_correct\nFROM preds"
+  } ],
+  "pages" : [ {
+    "name" : "fc2df20e",
+    "displayName" : "Predictions",
+    "layout" : [ {
+      "widget" : {
+        "name" : "9d62153d",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "2dffb0d7",
+            "fields" : [ {
+              "name" : "max_billing_month",
+              "expression" : "`max_billing_month`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "max_billing_month",
+              "displayName" : "max_billing_month"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "LATEST RESULTS"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 6,
+        "width" : 3,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "5484be70",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "7bfa647d",
+            "fields" : [ {
+              "name" : "predicted_invoice_change",
+              "expression" : "`predicted_invoice_change`"
+            }, {
+              "name" : "monthly(billing_month)",
+              "expression" : "DATE_TRUNC(\"MONTH\", `billing_month`)"
+            }, {
+              "name" : "count(predicted_invoice_change)",
+              "expression" : "COUNT(`predicted_invoice_change`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "line",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "monthly(billing_month)",
+              "scale" : {
+                "type" : "temporal"
+              },
+              "displayName" : "billing_month"
+            },
+            "y" : {
+              "fieldName" : "count(predicted_invoice_change)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "axis" : {
+                "title" : "Predicted Invoice Change"
+              },
+              "displayName" : "Predicted Invoice Change"
+            },
+            "color" : {
+              "fieldName" : "predicted_invoice_change",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "predicted_invoice_change"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Predictions Over Time"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 7,
+        "width" : 6,
+        "height" : 5
+      }
+    }, {
+      "widget" : {
+        "name" : "0bd414a6",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "20b145ea",
+            "fields" : [ {
+              "name" : "predicted_invoice_change",
+              "expression" : "`predicted_invoice_change`"
+            }, {
+              "name" : "actual_invoice_change",
+              "expression" : "`actual_invoice_change`"
+            }, {
+              "name" : "count(actual_invoice_change)",
+              "expression" : "COUNT(`actual_invoice_change`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "sankey",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(actual_invoice_change)",
+              "displayName" : "Count of actual_invoice_change"
+            },
+            "stages" : [ {
+              "fieldName" : "predicted_invoice_change",
+              "displayName" : "predicted_invoice_change"
+            }, {
+              "fieldName" : "actual_invoice_change",
+              "displayName" : "actual_invoice_change"
+            } ]
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Latest Prediction Stages"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 12,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "c688b25f",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "7d6c3665",
+            "fields" : [ {
+              "name" : "monthly(billing_month)",
+              "expression" : "DATE_TRUNC(\"MONTH\", `billing_month`)"
+            }, {
+              "name" : "avg(is_correct)",
+              "expression" : "AVG(`is_correct`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "line",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "monthly(billing_month)",
+              "scale" : {
+                "type" : "temporal"
+              },
+              "displayName" : "billing_month"
+            },
+            "y" : {
+              "fieldName" : "avg(is_correct)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "axis" : {
+                "title" : "Model Accuracy"
+              },
+              "displayName" : "Model Accuracy"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Model Accuracy Over Time"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 6,
+        "height" : 6
+      }
+    } ],
+    "pageType" : "PAGE_TYPE_CANVAS"
+  } ]
+}
