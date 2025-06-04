@@ -15,3 +15,5 @@ The topics are:
 - Discussion about GenAI Evaluation tools.
 
 TOOD: Complete This
+f
+dsfasdfasdfasdfasd
